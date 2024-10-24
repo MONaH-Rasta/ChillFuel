@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Chill Fuel", "Thisha", "0.3.2")]
+    [Info("Chill Fuel", "Thisha", "0.3.3")]
     [Description("Simple visualisation of vehicle fuel amount")]
     public class ChillFuel : RustPlugin
     {
@@ -35,7 +35,7 @@ namespace Oxide.Plugins
 
         protected override void LoadDefaultMessages()
         {
-            lang.RegisterMessages(new Dictionary<string, string>
+            lang.RegisterMessages(new()
             {
                 [dplnMinicopter] = dplnMinicopter,
                 [dplnScrapTransport] = dplnScrapTransport,
@@ -50,12 +50,12 @@ namespace Oxide.Plugins
         #endregion localization
 
         #region config
-        private ConfigData config;
+        private ConfigData _config;
 
         class ConfigData
         {
             [JsonProperty(PropertyName = "Postition")]
-            public AnchorPosition Position = new AnchorPosition
+            public AnchorPosition Position = new()
             {
                 XAxis = 0.285f,
                 YAxis = 0.010f
@@ -89,10 +89,7 @@ namespace Oxide.Plugins
             public float YAxis = 0;
         }
 
-        protected override void LoadDefaultConfig()
-        {
-            config = new ConfigData();
-        }
+        protected override void LoadDefaultConfig() => _config = new();
 
         protected override void LoadConfig()
         {
@@ -100,9 +97,9 @@ namespace Oxide.Plugins
 
             try
             {
-                config = Config.ReadObject<ConfigData>();
-                if (config == null)
-                    throw new Exception();
+                _config = Config.ReadObject<ConfigData>();
+                if (_config == null)
+                    throw new();
 
                 SaveConfig();
             }
@@ -112,11 +109,11 @@ namespace Oxide.Plugins
             }
         }
 
-        protected override void SaveConfig() => Config.WriteObject(config);
+        protected override void SaveConfig() => Config.WriteObject(_config);
         #endregion config
 
         #region data
-        private Dictionary<ulong, PlayerData> playerData = new Dictionary<ulong, PlayerData>();
+        private Dictionary<ulong, PlayerData> playerData = new();
 
         class PlayerData
         {
@@ -133,14 +130,16 @@ namespace Oxide.Plugins
             if (reset)
                 playerData.Remove(userID);
 
-            PlayerData data = new PlayerData();
-            data.Enabled = true;
-            data.MiniAlert = config.MiniAlert;
-            data.ScrapAlert = config.ScrapAlert;
-            data.BoatAlert = config.BoatAlert;
-            data.RHIBAlert = config.RHIBAlert;
-            data.CarAlert = config.CarAlert;
-            
+            PlayerData data = new()
+            {
+                Enabled = true,
+                MiniAlert = _config.MiniAlert,
+                ScrapAlert = _config.ScrapAlert,
+                BoatAlert = _config.BoatAlert,
+                RHIBAlert = _config.RHIBAlert,
+                CarAlert = _config.CarAlert
+            };
+
             playerData[userID] = data;
             SaveData();
         }
@@ -153,7 +152,7 @@ namespace Oxide.Plugins
             }
             catch
             {
-                playerData = new Dictionary<ulong, PlayerData>();
+                playerData = new();
             }
         }
 
@@ -176,12 +175,11 @@ namespace Oxide.Plugins
         [ConsoleCommand("fuel.add")]
         private void DeltaAlarm(ConsoleSystem.Arg arg)
         {
-            if (arg.Connection == null || arg.Connection.player == null)
+            BasePlayer player = arg.Player();
+            if (!player.IsValid())
+            {
                 return;
-
-            var player = arg.Connection.player as BasePlayer;
-            if (player == null)
-                return;
+            }
 
             switch (arg.Args[0])
             {
@@ -206,7 +204,7 @@ namespace Oxide.Plugins
                         SaveData();
                         break;
                     }
-                    
+
                 case "boat":
                     {
                         int newValue = playerData[player.userID].BoatAlert + Convert.ToInt32(arg.Args[1]);
@@ -217,7 +215,7 @@ namespace Oxide.Plugins
                         SaveData();
                         break;
                     }
-                    
+
                 case "rhib":
                     {
                         int newValue = playerData[player.userID].RHIBAlert + Convert.ToInt32(arg.Args[1]);
@@ -228,7 +226,7 @@ namespace Oxide.Plugins
                         SaveData();
                         break;
                     }
-                    
+
                 case "car":
                     {
                         int newValue = playerData[player.userID].CarAlert + Convert.ToInt32(arg.Args[1]);
@@ -248,12 +246,11 @@ namespace Oxide.Plugins
         [ConsoleCommand("playerdatafuelclose")]
         private void CloseInfo(ConsoleSystem.Arg arg)
         {
-            if (arg.Connection == null || arg.Connection.player == null)
+            BasePlayer player = arg.Player();
+            if (!player.IsValid())
+            {
                 return;
-
-            var player = arg.Connection.player as BasePlayer;
-            if (player == null)
-                return;
+            }
 
             CuiHelper.DestroyUi(player, playerLabelPanel);
             CuiHelper.DestroyUi(player, playerDataPanel);
@@ -263,12 +260,11 @@ namespace Oxide.Plugins
         [ConsoleCommand("playerdatatoggleshowfuel")]
         private void ToggleShowFuel(ConsoleSystem.Arg arg)
         {
-            if (arg.Connection == null || arg.Connection.player == null)
+            BasePlayer player = arg.Player();
+            if (!player.IsValid())
+            {
                 return;
-
-            var player = arg.Connection.player as BasePlayer;
-            if (player == null)
-                return;
+            }
 
             playerData[player.userID].Enabled = !playerData[player.userID].Enabled;
             SaveData();
@@ -327,15 +323,15 @@ namespace Oxide.Plugins
         {
             if (!permission.UserHasPermission(player.UserIDString, fuelpermissionName))
                 return;
-            
+
             if (!PlayerSignedUp(player))
                 return;
 
             BaseEntity be = entity.GetParentEntity();
-            if (be == null)
+            if (!be.IsValid())
                 return;
 
-            EntityFuelSystem fuelSystem;
+            IFuelSystem fuelSystem;
 
             ScrapTransportHelicopter scrap = be.GetComponentInParent<ScrapTransportHelicopter>();
             if (scrap != null)
@@ -343,7 +339,7 @@ namespace Oxide.Plugins
                 fuelSystem = scrap.GetFuelSystem();
                 if (fuelSystem != null)
                 {
-                    if (fuelSystem.fuelStorageInstance.IsValid(true))
+                    if (fuelSystem.HasValidInstance(true))
                     {
                         UpdatePanels(player, fuelSystem.GetFuelAmount(), true);
                         DoPlayerTime(player, false);
@@ -360,7 +356,7 @@ namespace Oxide.Plugins
                         fuelSystem = copter.GetFuelSystem();
                         if (fuelSystem != null)
                         {
-                            if (fuelSystem.fuelStorageInstance.IsValid(true))
+                            if (fuelSystem.HasValidInstance(true))
                             {
                                 UpdatePanels(player, fuelSystem.GetFuelAmount(), true);
                                 DoPlayerTime(player, false);
@@ -378,7 +374,7 @@ namespace Oxide.Plugins
                             fuelSystem = boat.GetFuelSystem();
                             if (fuelSystem != null)
                             {
-                                if (fuelSystem.fuelStorageInstance.IsValid(true))
+                                if (fuelSystem.HasValidInstance(true))
                                 {
                                     UpdatePanels(player, fuelSystem.GetFuelAmount(), true);
                                     DoPlayerTime(player, false);
@@ -396,7 +392,7 @@ namespace Oxide.Plugins
                                 fuelSystem = rhib.GetFuelSystem();
                                 if (fuelSystem != null)
                                 {
-                                    if (fuelSystem.fuelStorageInstance.IsValid(true))
+                                    if (fuelSystem.HasValidInstance(true))
                                     {
                                         UpdatePanels(player, fuelSystem.GetFuelAmount(), true);
                                         DoPlayerTime(player, false);
@@ -434,25 +430,25 @@ namespace Oxide.Plugins
         #region Functions
         void DoPlayerTime(BasePlayer player, bool updatePicture)
         {
-            if (player == null)
+            if (!player.IsValid())
                 return;
-            
+
             if (player.isMounted)
             {
                 timer.Once(5f, () =>
                 {
                     CheckAction(player, updatePicture);
                 });
-            } 
+            }
             else
             {
-                DestroyUI(player,true);
+                DestroyUI(player, true);
             }
         }
 
         void CheckAction(BasePlayer player, bool updatePicture)
         {
-            if (player == null)
+            if (!player.IsValid())
                 return;
 
             if (!PlayerSignedUp(player))
@@ -461,7 +457,7 @@ namespace Oxide.Plugins
                 return;
             }
 
-            EntityFuelSystem fuelSystem;
+            IFuelSystem fuelSystem;
 
             BaseVehicle veh = player.GetMountedVehicle();
             if (veh != null)
@@ -472,7 +468,7 @@ namespace Oxide.Plugins
                     fuelSystem = scrap.GetFuelSystem();
                     if (fuelSystem != null)
                     {
-                        if (fuelSystem.fuelStorageInstance.IsValid(true))
+                        if (fuelSystem.HasValidInstance(true))
                         {
                             if (playerData[player.userID].ScrapAlert > 0)
                             {
@@ -493,10 +489,10 @@ namespace Oxide.Plugins
                         fuelSystem = copter.GetFuelSystem();
                         if (fuelSystem != null)
                         {
-                            if (fuelSystem.fuelStorageInstance.IsValid(true))
+                            if (fuelSystem.HasValidInstance(true))
                             {
                                 if (playerData[player.userID].MiniAlert > 0)
-                                { 
+                                {
                                     if ((fuelSystem.GetFuelAmount() >= playerData[player.userID].MiniAlert - 2) && (fuelSystem.GetFuelAmount() <= playerData[player.userID].MiniAlert))
                                         Effect.server.Run(inviteNoticeMsg, copter.transform.position);
                                 }
@@ -514,7 +510,7 @@ namespace Oxide.Plugins
                             fuelSystem = rhib.GetFuelSystem();
                             if (fuelSystem != null)
                             {
-                                if (fuelSystem.fuelStorageInstance.IsValid(true))
+                                if (fuelSystem.HasValidInstance(true))
                                 {
                                     if (playerData[player.userID].RHIBAlert > 0)
                                     {
@@ -535,7 +531,7 @@ namespace Oxide.Plugins
                                 fuelSystem = motorBoat.GetFuelSystem();
                                 if (fuelSystem != null)
                                 {
-                                    if (fuelSystem.fuelStorageInstance.IsValid(true))
+                                    if (fuelSystem.HasValidInstance(true))
                                     {
                                         if (playerData[player.userID].BoatAlert > 0)
                                         {
@@ -576,14 +572,14 @@ namespace Oxide.Plugins
                 DestroyUI(player, true);
             }
         }
-        
+
         void UpdateState(BasePlayer player, bool newState)
         {
             bool doSave = false;
 
             if (!playerData.ContainsKey(player.userID))
             {
-                InitPlayer(player.userID,false);
+                InitPlayer(player.userID, false);
                 playerData[player.userID].Enabled = newState;
                 doSave = true;
             }
@@ -599,7 +595,7 @@ namespace Oxide.Plugins
             if (doSave)
             {
                 SaveData();
-                DestroyUI(player,true);
+                DestroyUI(player, true);
                 if (newState == true)
                     CheckAction(player, true);
             }
@@ -609,7 +605,7 @@ namespace Oxide.Plugins
         #region ui
         void UpdatePanels(BasePlayer player, float condition, bool doPicture)
         {
-            if (player == null)
+            if (!player.IsValid())
                 return;
 
             string color = "1 1 1 255";
@@ -633,7 +629,7 @@ namespace Oxide.Plugins
 
         void DrawUI(BasePlayer player, string color, string valueText, bool updatePicture)
         {
-            if (player == null)
+            if (!player.IsValid())
                 return;
 
             CuiElementContainer menu = Generate_Menu(player, color, valueText, updatePicture);
@@ -642,8 +638,8 @@ namespace Oxide.Plugins
 
         CuiElementContainer Generate_Menu(BasePlayer player, string color, string valueText, bool updatePicture)
         {
-            var elements = new CuiElementContainer();
-            var info01 = elements.Add(new CuiLabel
+            CuiElementContainer elements = new();
+            _ = elements.Add(new CuiLabel
             {
                 Text =
                 {
@@ -654,18 +650,19 @@ namespace Oxide.Plugins
                 },
 
                 RectTransform = {
-                    AnchorMin = (config.Position.XAxis + 0.015f).ToString() + " " + config.Position.YAxis.ToString(),      
-                    AnchorMax = (config.Position.XAxis + 0.040f).ToString() + " " + (config.Position.YAxis + 0.020f).ToString() 
+                    AnchorMin = (_config.Position.XAxis + 0.015f).ToString() + " " + _config.Position.YAxis.ToString(),
+                    AnchorMax = (_config.Position.XAxis + 0.040f).ToString() + " " + (_config.Position.YAxis + 0.020f).ToString()
                 },
             }, "Hud", "fuelmeterpanel"); ;
 
             if (updatePicture)
             {
-                var elements2 = new CuiElementContainer();
-                elements2.Add(new CuiElement
+                CuiElementContainer elements2 = new()
                 {
-                    Name = "fuelmeterpicture",
-                    Components =
+                    new CuiElement
+                    {
+                        Name = "fuelmeterpicture",
+                        Components =
                     {
                         new CuiRawImageComponent
                         {
@@ -674,11 +671,12 @@ namespace Oxide.Plugins
                         },
                         new CuiRectTransformComponent
                         {
-                            AnchorMin = config.Position.XAxis.ToString() + " " + config.Position.YAxis.ToString(),
-                            AnchorMax = (config.Position.XAxis + 0.010f).ToString() + " " + (config.Position.YAxis + 0.020f).ToString()
+                            AnchorMin = _config.Position.XAxis.ToString() + " " + _config.Position.YAxis.ToString(),
+                            AnchorMax = (_config.Position.XAxis + 0.010f).ToString() + " " + (_config.Position.YAxis + 0.020f).ToString()
                         }
                     }
-                }); 
+                    }
+                };
 
                 CuiHelper.AddUi(player, elements2);
             }
@@ -692,14 +690,13 @@ namespace Oxide.Plugins
         private const string playerDataPanel = "playerfueldata";
         private const string playerButtonPanel = "playerfuelbuttons";
 
-        private void ShowPlayerPanel(BasePlayer player)
+        public void ShowPlayerPanel(BasePlayer player)
         {
-            var elements = new CuiElementContainer();
-
-            var panel = elements.Add(new CuiPanel
+            CuiElementContainer elements = new();
+            _ = elements.Add(new CuiPanel
             {
                 Image = {
-                    Color = ColorExtensions.ColorFromHex("#859c5aE4",255)  
+                    Color = ColorExtensions.ColorFromHex("#859c5aE4",255)
                 },
 
                 RectTransform = {
@@ -713,7 +710,7 @@ namespace Oxide.Plugins
             elements.Add(AddLabel(Lang(dplnMinicopter, player.UserIDString), "0.08 0.80", "0.9 0.90"), playerLabelPanel);
             elements.Add(AddLabel(Lang(dplnScrapTransport, player.UserIDString), "0.08 0.65", "0.9 0.75"), playerLabelPanel);
             elements.Add(AddLabel(Lang(dplnMotorboat, player.UserIDString), "0.08 0.50", "0.9 0.60"), playerLabelPanel);
-            elements.Add(AddLabel(Lang(dplnRHIB, player.UserIDString), "0.08 0.35", "0.9 0.45"), playerLabelPanel); 
+            elements.Add(AddLabel(Lang(dplnRHIB, player.UserIDString), "0.08 0.35", "0.9 0.45"), playerLabelPanel);
             elements.Add(AddLabel(Lang(dplnCar, player.UserIDString), "0.08 0.20", "0.9 0.30"), playerLabelPanel);
 
             elements.Add(AddLabel(Lang(dplnShowValue, player.UserIDString), "0.08 0.05", "0.9 0.15"), playerLabelPanel);
@@ -725,11 +722,10 @@ namespace Oxide.Plugins
             ShowButtonPanel(player);
         }
 
-        private void ShowValuePanel(BasePlayer player)
+        public void ShowValuePanel(BasePlayer player)
         {
-            var elements = new CuiElementContainer();
-
-            var panel = elements.Add(new CuiPanel
+            CuiElementContainer elements = new();
+            _ = elements.Add(new CuiPanel
             {
                 Image = {
                     Color = ColorExtensions.ColorFromHex("#859c5aE4",255)
@@ -750,11 +746,11 @@ namespace Oxide.Plugins
             elements.Add(AddValueBackground("0.35 0.20", "0.65 0.30"), playerDataPanel);
             elements.Add(AddValueBackground("0.35 0.05", "0.65 0.15"), playerDataPanel);
 
-            elements.Add(AddValueLabel(GetStringValue(playerData[player.userID].MiniAlert), "0.35 0.80", "0.65 0.90"), playerDataPanel);
-            elements.Add(AddValueLabel(GetStringValue(playerData[player.userID].ScrapAlert), "0.35 0.65", "0.65 0.75"), playerDataPanel);
-            elements.Add(AddValueLabel(GetStringValue(playerData[player.userID].BoatAlert), "0.35 0.50", "0.65 0.60"), playerDataPanel);
-            elements.Add(AddValueLabel(GetStringValue(playerData[player.userID].RHIBAlert), "0.35 0.35", "0.65 0.45"), playerDataPanel);
-            elements.Add(AddValueLabel(GetStringValue(playerData[player.userID].CarAlert), "0.35 0.20", "0.65 0.30"), playerDataPanel);
+            elements.Add(AddValueLabel(playerData[player.userID].MiniAlert.ToString(), "0.35 0.80", "0.65 0.90"), playerDataPanel);
+            elements.Add(AddValueLabel(playerData[player.userID].ScrapAlert.ToString(), "0.35 0.65", "0.65 0.75"), playerDataPanel);
+            elements.Add(AddValueLabel(playerData[player.userID].BoatAlert.ToString(), "0.35 0.50", "0.65 0.60"), playerDataPanel);
+            elements.Add(AddValueLabel(playerData[player.userID].RHIBAlert.ToString(), "0.35 0.35", "0.65 0.45"), playerDataPanel);
+            elements.Add(AddValueLabel(playerData[player.userID].CarAlert.ToString(), "0.35 0.20", "0.65 0.30"), playerDataPanel);
 
             if (playerData[player.userID].Enabled)
                 elements.Add(AddValueLabel("V", "0.35 0.05", "0.65 0.15"), playerDataPanel);
@@ -764,11 +760,10 @@ namespace Oxide.Plugins
             CuiHelper.AddUi(player, elements);
         }
 
-        private void ShowButtonPanel(BasePlayer player)
+        public void ShowButtonPanel(BasePlayer player)
         {
-            var elements = new CuiElementContainer();
-
-            var panel = elements.Add(new CuiPanel
+            CuiElementContainer elements = new();
+            _ = elements.Add(new CuiPanel
             {
                 Image = {
                     Color = ColorExtensions.ColorFromHex("#859c5aE4",255)
@@ -787,7 +782,7 @@ namespace Oxide.Plugins
             elements.Add(CreateUpDownButton(playerButtonPanel, "boat", false, "0.25 0.50", "0.40 0.60"), playerButtonPanel);
             elements.Add(CreateUpDownButton(playerButtonPanel, "rhib", false, "0.25 0.35", "0.40 0.45"), playerButtonPanel);
             elements.Add(CreateUpDownButton(playerButtonPanel, "car", false, "0.25 0.20", "0.40 0.30"), playerButtonPanel);
-            
+
             elements.Add(CreateUpDownButton(playerButtonPanel, "mini", true, "0.45 0.80", "0.60 0.90"), playerButtonPanel);
             elements.Add(CreateUpDownButton(playerButtonPanel, "scrap", true, "0.45 0.65", "0.60 0.75"), playerButtonPanel);
             elements.Add(CreateUpDownButton(playerButtonPanel, "boat", true, "0.45 0.50", "0.60 0.60"), playerButtonPanel);
@@ -797,11 +792,11 @@ namespace Oxide.Plugins
             elements.Add(CreateToggleButton(playerButtonPanel, !playerData[player.userID].Enabled, "0.35 0.05", "0.50 0.15"), playerButtonPanel);
 
             elements.Add(CreateCloseButton(playerButtonPanel, Lang(lblClose, player.UserIDString)), playerButtonPanel);
-            
+
             CuiHelper.AddUi(player, elements);
         }
 
-        private static CuiButton CreateToggleButton(string mainPanelName, bool toggleOn, string anchorMin, string anchorMax)
+        public static CuiButton CreateToggleButton(string mainPanelName, bool toggleOn, string anchorMin, string anchorMax)
         {
             return new CuiButton
             {
@@ -821,15 +816,14 @@ namespace Oxide.Plugins
                     FontSize = 14,
                     Align = TextAnchor.MiddleCenter
                 },
-                
+
             };
         }
 
-        private static CuiButton CreateUpDownButton(string mainPanelName, string vehicle, bool up, string anchorMin, string anchorMax)
+        public static CuiButton CreateUpDownButton(string mainPanelName, string vehicle, bool up, string anchorMin, string anchorMax)
         {
             int value;
-            string lblText = string.Empty;
-
+            string lblText;
             if (up)
             {
                 value = 10;
@@ -864,7 +858,7 @@ namespace Oxide.Plugins
             };
         }
 
-        private static CuiButton CreateCloseButton(string mainPanelName, string lblText)
+        public static CuiButton CreateCloseButton(string mainPanelName, string lblText)
         {
             return new CuiButton
             {
@@ -887,45 +881,45 @@ namespace Oxide.Plugins
             };
         }
 
-        private static CuiLabel AddLabel(string labelText, string anchorMin, string anchorMax)
+        public static CuiLabel AddLabel(string labelText, string anchorMin, string anchorMax)
         {
             return new CuiLabel
             {
                 Text =
                 {
-                Text = labelText,
-                Color = ColorExtensions.ColorFromHex("#FFFFFFFF", 255),
-                FontSize = 14,
-                Align = TextAnchor.MiddleLeft,
+                    Text = labelText,
+                    Color = ColorExtensions.ColorFromHex("#FFFFFFFF", 255),
+                    FontSize = 14,
+                    Align = TextAnchor.MiddleLeft,
                 },
 
                 RectTransform = {
-                AnchorMin = anchorMin,
-                AnchorMax = anchorMax
+                    AnchorMin = anchorMin,
+                    AnchorMax = anchorMax
                 },
             };
         }
 
-        private static CuiLabel AddValueLabel(string labelText, string anchorMin, string anchorMax)
+        public static CuiLabel AddValueLabel(string labelText, string anchorMin, string anchorMax)
         {
             return new CuiLabel
             {
                 Text =
                 {
-                Text = labelText,
-                Color = ColorExtensions.ColorFromHex("#FFFFFFFF", 255),
-                FontSize = 14,
-                Align = TextAnchor.MiddleCenter,
+                    Text = labelText,
+                    Color = ColorExtensions.ColorFromHex("#FFFFFFFF", 255),
+                    FontSize = 14,
+                    Align = TextAnchor.MiddleCenter,
                 },
 
                 RectTransform = {
-                AnchorMin = anchorMin,
-                AnchorMax = anchorMax
+                    AnchorMin = anchorMin,
+                    AnchorMax = anchorMax
                 },
             };
         }
 
-        private static CuiPanel AddValueBackground(string anchorMin, string anchorMax)
+        public static CuiPanel AddValueBackground(string anchorMin, string anchorMax)
         {
             return new CuiPanel
             {
@@ -945,7 +939,7 @@ namespace Oxide.Plugins
         #endregion playerpanel
 
         #region helpers
-        private bool PlayerSignedUp(BasePlayer player)
+        public bool PlayerSignedUp(BasePlayer player)
         {
             if (playerData.ContainsKey(player.userID))
             {
@@ -958,15 +952,7 @@ namespace Oxide.Plugins
             }
         }
 
-        private string GetStringValue(int value)
-        {
-            if (value != 0)
-                return value.ToString();
-            else
-                return "0";
-        }
-
-        private string Lang(string key, string userId = null, params object[] args) => string.Format(lang.GetMessage(key, this, userId), args);
+        public string Lang(string key, string userId = null, params object[] args) => string.Format(lang.GetMessage(key, this, userId), args);
 
         public static class ColorExtensions
         {
@@ -1005,26 +991,26 @@ namespace Oxide.Plugins
                 }
             }
 
-            private static Color FromHexString(string hexString)
+            public static Color FromHexString(string hexString)
             {
                 if (string.IsNullOrEmpty(hexString))
                 {
                     throw new InvalidOperationException("Cannot convert an empty/null string.");
                 }
-                var trimChars = new[] { '#' };
-                var str = hexString.Trim(trimChars);
+                char[] trimChars = new[] { '#' };
+                string str = hexString.Trim(trimChars);
                 switch (str.Length)
                 {
                     case 3:
                         {
-                            var chArray2 = new[] { str[0], str[0], str[1], str[1], str[2], str[2], 'F', 'F' };
-                            str = new string(chArray2);
+                            char[] chArray2 = new[] { str[0], str[0], str[1], str[1], str[2], str[2], 'F', 'F' };
+                            str = new(chArray2);
                             break;
                         }
                     case 4:
                         {
-                            var chArray3 = new[] { str[0], str[0], str[1], str[1], str[2], str[2], str[3], str[3] };
-                            str = new string(chArray3);
+                            char[] chArray3 = new[] { str[0], str[0], str[1], str[1], str[2], str[2], str[3], str[3] };
+                            str = new(chArray3);
                             break;
                         }
                     default:
@@ -1038,10 +1024,10 @@ namespace Oxide.Plugins
                         }
                         break;
                 }
-                var r = byte.Parse(str.Substring(0, 2), NumberStyles.HexNumber);
-                var g = byte.Parse(str.Substring(2, 2), NumberStyles.HexNumber);
-                var b = byte.Parse(str.Substring(4, 2), NumberStyles.HexNumber);
-                var a = byte.Parse(str.Substring(6, 2), NumberStyles.HexNumber);
+                byte r = byte.Parse(str[..2], NumberStyles.HexNumber);
+                byte g = byte.Parse(str.Substring(2, 2), NumberStyles.HexNumber);
+                byte b = byte.Parse(str.Substring(4, 2), NumberStyles.HexNumber);
+                byte a = byte.Parse(str.Substring(6, 2), NumberStyles.HexNumber);
 
                 return new Color32(r, g, b, a);
             }
@@ -1053,7 +1039,7 @@ namespace Oxide.Plugins
                 {
                     hexColor = "000000";
                 }
-                int red = int.Parse(hexColor.Substring(0, 2), NumberStyles.AllowHexSpecifier);
+                int red = int.Parse(hexColor[..2], NumberStyles.AllowHexSpecifier);
                 int green = int.Parse(hexColor.Substring(2, 2), NumberStyles.AllowHexSpecifier);
                 int blue = int.Parse(hexColor.Substring(4, 2), NumberStyles.AllowHexSpecifier);
 
