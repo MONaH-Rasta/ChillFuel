@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("Chill Fuel", "Thisha", "0.2.2")]
+    [Info("Chill Fuel", "Thisha", "0.2.3")]
     [Description("Simple visualisation of vehicle fuel amount")]
     public class ChillFuel : RustPlugin
     {
@@ -162,15 +162,21 @@ namespace Oxide.Plugins
             if (be == null)
                 return;
 
+            EntityFuelSystem fuelSystem; 
+
             if (be.ShortPrefabName.Equals(minicopterShortName))
             {
                 MiniCopter copter = be.GetComponentInChildren<MiniCopter>();
                 if (copter != null) 
                 {
-                    if (copter.GetFuelSystem().fuelStorageInstance.IsValid(true))
+                    fuelSystem = copter.GetFuelSystem();
+                    if (fuelSystem != null)
                     {
-                        UpdatePanels(player, copter.GetFuelSystem().GetFuelAmount(), true);
-                        DoPlayerTime(player, false);
+                        if (fuelSystem.fuelStorageInstance.IsValid(true))
+                        {
+                            UpdatePanels(player, fuelSystem.GetFuelAmount(), true);
+                            DoPlayerTime(player, false);
+                        }
                     }
                 }
             } 
@@ -181,10 +187,14 @@ namespace Oxide.Plugins
                     MiniCopter copter = be.GetComponentInParent<MiniCopter>();
                     if (copter != null)
                     {
-                        if (copter.GetFuelSystem().fuelStorageInstance.IsValid(true))
+                        fuelSystem = copter.GetFuelSystem();
+                        if (fuelSystem != null)
                         {
-                            UpdatePanels(player, copter.GetFuelSystem().GetFuelAmount(), true);
-                            DoPlayerTime(player, false);
+                            if (fuelSystem.fuelStorageInstance.IsValid(true))
+                            {
+                                UpdatePanels(player, fuelSystem.GetFuelAmount(), true);
+                                DoPlayerTime(player, false);
+                            }
                         }
                     }
                 } 
@@ -195,8 +205,15 @@ namespace Oxide.Plugins
                         MotorRowboat boat = be.GetComponentInChildren<MotorRowboat>();
                         if (boat != null)
                         {
-                            UpdatePanels(player, boat.GetFuelSystem().GetFuelAmount(), true);
-                            DoPlayerTime(player, false);
+                            fuelSystem = boat.GetFuelSystem();
+                            if (fuelSystem != null)
+                            {
+                                if (fuelSystem.fuelStorageInstance.IsValid(true))
+                                {
+                                    UpdatePanels(player, fuelSystem.GetFuelAmount(), true);
+                                    DoPlayerTime(player, false);
+                                }
+                            }
                         }
                     } 
                     else
@@ -206,8 +223,15 @@ namespace Oxide.Plugins
                             RHIB rhib = be.GetComponentInChildren<RHIB>();
                             if (rhib != null)
                             {
-                                UpdatePanels(player, rhib.GetFuelSystem().GetFuelAmount(), true);
-                                DoPlayerTime(player, false);
+                                fuelSystem = rhib.GetFuelSystem();
+                                if (fuelSystem != null)
+                                {
+                                    if (fuelSystem.fuelStorageInstance.IsValid(true))
+                                    {
+                                        UpdatePanels(player, fuelSystem.GetFuelAmount(), true);
+                                        DoPlayerTime(player, false);
+                                    }
+                                }
                             }
                         }
                         else
@@ -215,7 +239,8 @@ namespace Oxide.Plugins
                             ModularCar car = be.GetComponentInChildren<ModularCar>();
                             if (car != null)
                             {
-                                UpdatePanels(player, car.GetFuelSystem().GetFuelAmount(), true);
+                                car.fuelSystem.HasFuel(false);
+								UpdatePanels(player, car.fuelSystem.GetFuelAmount(), true);
                                 DoPlayerTime(player, false);
                             }
                         }
@@ -266,6 +291,8 @@ namespace Oxide.Plugins
                 return;
             }
 
+            EntityFuelSystem fuelSystem;
+
             BaseVehicle veh = player.GetMountedVehicle();
             if (veh != null)
             {
@@ -275,10 +302,14 @@ namespace Oxide.Plugins
 
                 if (copter != null)
                 {
-                    if (copter.GetFuelSystem().fuelStorageInstance.IsValid(true))
+                    fuelSystem = copter.GetFuelSystem();
+                    if (fuelSystem != null)
                     {
-                        UpdatePanels(player, copter.GetFuelSystem().GetFuelAmount(), updatePicture);
-                        DoPlayerTime(player, false);
+                        if (fuelSystem.fuelStorageInstance.IsValid(true))
+                        {
+                            UpdatePanels(player, fuelSystem.GetFuelAmount(), updatePicture);
+                            DoPlayerTime(player, false);
+                        }
                     }
                 }
                 else
@@ -286,23 +317,38 @@ namespace Oxide.Plugins
                     RHIB rhib = veh.GetComponentInParent<RHIB>();
                     if (rhib != null)
                     {
-                        UpdatePanels(player, rhib.GetFuelSystem().GetFuelAmount(), updatePicture);
-                        DoPlayerTime(player, false);
+                        fuelSystem = rhib.GetFuelSystem();
+                        if (fuelSystem != null)
+                        {
+                            if (fuelSystem.fuelStorageInstance.IsValid(true))
+                            {
+                                UpdatePanels(player, fuelSystem.GetFuelAmount(), updatePicture);
+                                DoPlayerTime(player, false);
+                            }
+                        }
                     }
                     else
                     {
                         MotorRowboat motorBoat = veh.GetComponentInParent<MotorRowboat>();
                         if (motorBoat != null)
                         {
-                            UpdatePanels(player, motorBoat.GetFuelSystem().GetFuelAmount(), updatePicture);
-                            DoPlayerTime(player, false);
+                            fuelSystem = motorBoat.GetFuelSystem();
+                            if (fuelSystem != null)
+                            {
+                                if (fuelSystem.fuelStorageInstance.IsValid(true))
+                                {
+                                    UpdatePanels(player, fuelSystem.GetFuelAmount(), updatePicture);
+                                    DoPlayerTime(player, false);
+                                }
+                            }
                         }
                         else
                         {
                             ModularCar car = veh.GetComponentInParent<ModularCar>();
                             if (car != null)
                             {
-                                UpdatePanels(player, car.GetFuelSystem().GetFuelAmount(), updatePicture);
+                                car.fuelSystem.HasFuel(false);
+                                UpdatePanels(player, car.fuelSystem.GetFuelAmount(), updatePicture);
                                 DoPlayerTime(player, false);
                             }
                             else
@@ -362,6 +408,9 @@ namespace Oxide.Plugins
         #region ui
         void UpdatePanels(BasePlayer player, float condition, bool doPicture)
         {
+            if (player == null)
+                return;
+
             string color = "1 1 1 255";
             string valueText;
 
@@ -383,6 +432,9 @@ namespace Oxide.Plugins
 
         void DrawUI(BasePlayer player, string color, string valueText, bool updatePicture)
         {
+            if (player == null)
+                return;
+
             CuiElementContainer menu = Generate_Menu(player, color, valueText, updatePicture);
             CuiHelper.AddUi(player, menu);
         }
