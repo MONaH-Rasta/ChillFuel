@@ -6,10 +6,11 @@ using System.Collections.Generic;
 using Oxide.Core;
 using UnityEngine.UI;
 using Network;
+using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("Chill Fuel", "Thisha", "0.1.3")]
+    [Info("Chill Fuel", "Thisha", "0.2.0")]
     [Description("Simple visualisation of vehicle fuel amount")]
     public class ChillFuel : RustPlugin
     {
@@ -30,6 +31,54 @@ namespace Oxide.Plugins
             }, this);
         }
         #endregion localization
+
+        #region config
+        private ConfigData config;
+
+        class ConfigData
+        {
+            [JsonProperty(PropertyName = "Postition")]
+            public AnchorPosition Position = new AnchorPosition
+            {
+                XAxis = 0.285f,
+                YAxis = 0.010f
+            };
+        }
+
+        private class AnchorPosition
+        {
+            [JsonProperty(PropertyName = "X-axis")]
+            public float XAxis = 0;
+
+            [JsonProperty(PropertyName = "Y-axis")]
+            public float YAxis = 0;
+        }
+
+        protected override void LoadDefaultConfig()
+        {
+            config = new ConfigData();
+        }
+
+        protected override void LoadConfig()
+        {
+            base.LoadConfig();
+
+            try
+            {
+                config = Config.ReadObject<ConfigData>();
+                if (config == null)
+                    throw new Exception();
+
+                SaveConfig();
+            }
+            catch
+            {
+                LoadDefaultConfig();
+            }
+        }
+
+        protected override void SaveConfig() => Config.WriteObject(config);
+        #endregion config
 
         #region commands
         [ChatCommand("Fuel")]
@@ -349,10 +398,10 @@ namespace Oxide.Plugins
                 },
 
                 RectTransform = {
-                    AnchorMin = "0.300 0.010",    
-                    AnchorMax = "0.315 0.030"     
+                    AnchorMin = (config.Position.XAxis + 0.015f).ToString() + " " + config.Position.YAxis.ToString(),      
+                    AnchorMax = (config.Position.XAxis + 0.030f).ToString() + " " + (config.Position.YAxis + 0.020f).ToString() 
                 },
-            }, "Hud", "fuelmeterpanel");
+            }, "Hud", "fuelmeterpanel"); ;
 
             if (updatePicture)
             {
@@ -369,8 +418,8 @@ namespace Oxide.Plugins
                         },
                         new CuiRectTransformComponent
                         {
-                            AnchorMin = "0.285 0.010",    
-                            AnchorMax = "0.295 0.030"     
+                            AnchorMin = config.Position.XAxis.ToString() + " " + config.Position.YAxis.ToString(),     
+                            AnchorMax = (config.Position.XAxis + 0.010f).ToString() + " " + (config.Position.YAxis + 0.020f).ToString()      
                         }
                     }
                 });
