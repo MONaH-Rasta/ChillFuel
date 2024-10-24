@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("Chill Fuel", "Thisha", "0.2.0")]
+    [Info("Chill Fuel", "Thisha", "0.2.1")]
     [Description("Simple visualisation of vehicle fuel amount")]
     public class ChillFuel : RustPlugin
     {
@@ -43,6 +43,9 @@ namespace Oxide.Plugins
                 XAxis = 0.285f,
                 YAxis = 0.010f
             };
+
+            [JsonProperty(PropertyName = "Width")]
+            public float Width = 0.045f;
         }
 
         private class AnchorPosition
@@ -399,7 +402,7 @@ namespace Oxide.Plugins
 
                 RectTransform = {
                     AnchorMin = (config.Position.XAxis + 0.015f).ToString() + " " + config.Position.YAxis.ToString(),      
-                    AnchorMax = (config.Position.XAxis + 0.030f).ToString() + " " + (config.Position.YAxis + 0.020f).ToString() 
+                    AnchorMax = (config.Position.XAxis + 0.045f).ToString() + " " + (config.Position.YAxis + 0.020f).ToString() 
                 },
             }, "Hud", "fuelmeterpanel"); ;
 
