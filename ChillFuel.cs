@@ -9,10 +9,10 @@ using Network;
 
 namespace Oxide.Plugins
 {
-    [Info("Chill fuel", "Thisha", "0.1.2")]
+    [Info("Chill Fuel", "Thisha", "0.1.3")]
+    [Description("Simple visualisation of vehicle fuel amount")]
     public class ChillFuel : RustPlugin
     {
-        private const string inviteNoticeMsg = "assets/bundled/prefabs/fx/invite_notice.prefab";
         private const string minicopterShortName = "minicopter.entity";
         private const string transportheliShortName = "scraptransporthelicopter";
         private const string rowboatShortName = "rowboat";
@@ -37,7 +37,7 @@ namespace Oxide.Plugins
         {
             if (args.Length == 1)
             {
-                switch (args[0])
+                switch (args[0].ToLower())
                 {
                     case "on":
                         UpdateState(player,true);
@@ -190,12 +190,6 @@ namespace Oxide.Plugins
             if (player == null)
                 return;
             
-            if (!PlayerSignedUp(player))
-            {
-                DestroyUI(player, true);
-                return;
-            }
-
             if (player.isMounted)
             {
                 timer.Once(5f, () =>
@@ -211,6 +205,15 @@ namespace Oxide.Plugins
 
         void CheckAction(BasePlayer player, bool updatePicture)
         {
+            if (player == null)
+                return;
+
+            if (!PlayerSignedUp(player))
+            {
+                DestroyUI(player, true);
+                return;
+            }
+
             BaseVehicle veh = player.GetMountedVehicle();
             if (veh != null)
             {
@@ -293,7 +296,7 @@ namespace Oxide.Plugins
         {
             try
             {
-                playerData = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<ulong, bool>>("ChillFuel");
+                playerData = Interface.Oxide.DataFileSystem.ReadObject<Dictionary<ulong, bool>>(Name);
             }
             catch
             {
@@ -301,7 +304,7 @@ namespace Oxide.Plugins
             }
         }
         
-        void SaveData() => Interface.Oxide.DataFileSystem.WriteObject("ChillFuel", playerData);
+        void SaveData() => Interface.Oxide.DataFileSystem.WriteObject(Name, playerData);
         #endregion Functions    
 
         #region ui
@@ -362,7 +365,7 @@ namespace Oxide.Plugins
                         new CuiRawImageComponent
                         {
                             Color = "1 1 1 1",
-                            Url = "http://76lin1nucleusbe.webhosting.be/rust/fuel.png"
+                            Url = "https://i.imgur.com/t0d3aza.png"
                         },
                         new CuiRectTransformComponent
                         {
