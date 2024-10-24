@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("Chill Fuel", "Thisha", "0.2.3")]
+    [Info("Chill Fuel", "Thisha", "0.2.4")]
     [Description("Simple visualisation of vehicle fuel amount")]
     public class ChillFuel : RustPlugin
     {
@@ -19,6 +19,7 @@ namespace Oxide.Plugins
         private const string rowboatShortName = "rowboat";
         private const string RHIBShortName = "rhib";
         private const string fuelpermissionName = "chillfuel.use";
+        private string inviteNoticeMsg = "assets/bundled/prefabs/fx/invite_notice.prefab";
 
         private Dictionary<ulong, bool> playerData = new Dictionary<ulong, bool>();
         
@@ -46,6 +47,9 @@ namespace Oxide.Plugins
 
             [JsonProperty(PropertyName = "Width")]
             public float Width = 0.045f;
+
+            [JsonProperty(PropertyName = "Heli alert")]
+            public int Alert = 50;
         }
 
         private class AnchorPosition
@@ -307,6 +311,11 @@ namespace Oxide.Plugins
                     {
                         if (fuelSystem.fuelStorageInstance.IsValid(true))
                         {
+                            if (config.Alert > 0)
+                            {
+                                if ((fuelSystem.GetFuelAmount() >= config.Alert - 2) && (fuelSystem.GetFuelAmount() <= config.Alert))    
+                                    Effect.server.Run(inviteNoticeMsg, copter.transform.position);                  
+                            }
                             UpdatePanels(player, fuelSystem.GetFuelAmount(), updatePicture);
                             DoPlayerTime(player, false);
                         }
