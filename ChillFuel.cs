@@ -1,4 +1,4 @@
-﻿using Oxide.Game.Rust.Cui;
+using Oxide.Game.Rust.Cui;
 using UnityEngine;
 using System;
 using Rust;
@@ -11,7 +11,7 @@ using System.Globalization;
 
 namespace Oxide.Plugins
 {
-    [Info("Chill Fuel", "Thisha", "0.3.0")]
+    [Info("Chill Fuel", "Thisha", "0.3.1")]
     [Description("Simple visualisation of vehicle fuel amount")]
     public class ChillFuel : RustPlugin
     {
@@ -411,8 +411,8 @@ namespace Oxide.Plugins
                             ModularCar car = be.GetComponentInChildren<ModularCar>();
                             if (car != null)
                             {
-                                car.fuelSystem.HasFuel(false);
-                                UpdatePanels(player, car.fuelSystem.GetFuelAmount(), true);
+                                car.GetFuelSystem().HasFuel(false);
+                                UpdatePanels(player, car.GetFuelSystem().GetFuelAmount(), true);
                                 DoPlayerTime(player, false);
                             }
                         }
@@ -555,15 +555,15 @@ namespace Oxide.Plugins
                                 ModularCar car = veh.GetComponentInParent<ModularCar>();
                                 if (car != null)
                                 {
-                                    car.fuelSystem.HasFuel(true);
+                                    car.GetFuelSystem().HasFuel(true);
 
                                     if (playerData[player.userID].CarAlert > 0)
                                     {
-                                        if ((car.fuelSystem.GetFuelAmount() >= playerData[player.userID].CarAlert - 2) && (car.fuelSystem.GetFuelAmount() <= playerData[player.userID].CarAlert))
+                                        if ((car.GetFuelSystem().GetFuelAmount() >= playerData[player.userID].CarAlert - 2) && (car.GetFuelSystem().GetFuelAmount() <= playerData[player.userID].CarAlert))
                                             Effect.server.Run(inviteNoticeMsg, car.transform.position);
                                     }
 
-                                    UpdatePanels(player, car.fuelSystem.GetFuelAmount(), updatePicture);
+                                    UpdatePanels(player, car.GetFuelSystem().GetFuelAmount(), updatePicture);
                                     DoPlayerTime(player, false);
                                 }
                                 else
