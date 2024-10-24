@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("Chill Fuel", "Thisha", "0.2.1")]
+    [Info("Chill Fuel", "Thisha", "0.2.2")]
     [Description("Simple visualisation of vehicle fuel amount")]
     public class ChillFuel : RustPlugin
     {
@@ -195,7 +195,7 @@ namespace Oxide.Plugins
                         MotorRowboat boat = be.GetComponentInChildren<MotorRowboat>();
                         if (boat != null)
                         {
-                            UpdatePanels(player, boat.fuelSystem.GetFuelAmount(), true);
+                            UpdatePanels(player, boat.GetFuelSystem().GetFuelAmount(), true);
                             DoPlayerTime(player, false);
                         }
                     } 
@@ -206,7 +206,7 @@ namespace Oxide.Plugins
                             RHIB rhib = be.GetComponentInChildren<RHIB>();
                             if (rhib != null)
                             {
-                                UpdatePanels(player, rhib.fuelSystem.GetFuelAmount(), true);
+                                UpdatePanels(player, rhib.GetFuelSystem().GetFuelAmount(), true);
                                 DoPlayerTime(player, false);
                             }
                         }
@@ -215,7 +215,7 @@ namespace Oxide.Plugins
                             ModularCar car = be.GetComponentInChildren<ModularCar>();
                             if (car != null)
                             {
-                                UpdatePanels(player, car.fuelSystem.GetFuelAmount(), true);
+                                UpdatePanels(player, car.GetFuelSystem().GetFuelAmount(), true);
                                 DoPlayerTime(player, false);
                             }
                         }
@@ -286,7 +286,7 @@ namespace Oxide.Plugins
                     RHIB rhib = veh.GetComponentInParent<RHIB>();
                     if (rhib != null)
                     {
-                        UpdatePanels(player, rhib.fuelSystem.GetFuelAmount(), updatePicture);
+                        UpdatePanels(player, rhib.GetFuelSystem().GetFuelAmount(), updatePicture);
                         DoPlayerTime(player, false);
                     }
                     else
@@ -294,7 +294,7 @@ namespace Oxide.Plugins
                         MotorRowboat motorBoat = veh.GetComponentInParent<MotorRowboat>();
                         if (motorBoat != null)
                         {
-                            UpdatePanels(player, motorBoat.fuelSystem.GetFuelAmount(), updatePicture);
+                            UpdatePanels(player, motorBoat.GetFuelSystem().GetFuelAmount(), updatePicture);
                             DoPlayerTime(player, false);
                         }
                         else
@@ -302,7 +302,7 @@ namespace Oxide.Plugins
                             ModularCar car = veh.GetComponentInParent<ModularCar>();
                             if (car != null)
                             {
-                                UpdatePanels(player, car.fuelSystem.GetFuelAmount(), updatePicture);
+                                UpdatePanels(player, car.GetFuelSystem().GetFuelAmount(), updatePicture);
                                 DoPlayerTime(player, false);
                             }
                             else
