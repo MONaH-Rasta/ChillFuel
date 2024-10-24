@@ -1,17 +1,15 @@
-using Oxide.Game.Rust.Cui;
-using UnityEngine;
 using System;
-using Rust;
 using System.Collections.Generic;
-using Oxide.Core;
-using UnityEngine.UI;
-using Network;
+
 using Newtonsoft.Json;
+using Oxide.Core;
+using Oxide.Game.Rust.Cui;
 using System.Globalization;
+using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Chill Fuel", "Thisha", "0.3.1")]
+    [Info("Chill Fuel", "Thisha", "0.3.2")]
     [Description("Simple visualisation of vehicle fuel amount")]
     public class ChillFuel : RustPlugin
     {
@@ -356,7 +354,7 @@ namespace Oxide.Plugins
             {
                 if (be.ShortPrefabName.Equals(minicopterShortName))
                 {
-                    MiniCopter copter = be.GetComponentInParent<MiniCopter>();
+                    Minicopter copter = be.GetComponentInParent<Minicopter>();
                     if (copter != null)
                     {
                         fuelSystem = copter.GetFuelSystem();
@@ -489,7 +487,7 @@ namespace Oxide.Plugins
                 }
                 else
                 {
-                    MiniCopter copter = veh.GetComponentInParent<MiniCopter>();
+                    Minicopter copter = veh.GetComponentInParent<Minicopter>();
                     if (copter != null)
                     {
                         fuelSystem = copter.GetFuelSystem();
